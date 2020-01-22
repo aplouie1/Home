@@ -1,0 +1,1270 @@
+// File: CTree.cpp
+//
+// CMSC 341 Spring 2019
+//
+// Implementation file for CTree header file
+//
+
+#include <iostream>
+#include "CTree.h"
+
+
+// CNode constructor; readies a node with the given data
+CNode::CNode(int key) {
+
+  m_data = key;
+  m_height = INITIAL;
+  m_size = INITIAL;
+  m_parent = NULL;
+  m_left = NULL;
+  m_right = NULL;
+  
+}
+
+
+
+// CNode destructor
+CNode::~CNode() {
+
+  m_data = INITIAL;
+  m_height = INITIAL;
+  m_size = INITIAL;
+  m_parent = NULL;
+  m_left = NULL;
+  m_right = NULL;
+
+}
+
+
+
+// CTree default constructor; readies a CTree object
+// for invoked member functions
+CTree::CTree() {
+  
+  // Initializations
+  m_root = NULL;
+  m_currNode = NULL;
+  m_rebalNode = NULL;
+  m_array = NULL;
+  m_cap = INITIAL;
+  m_count = INITIAL;
+
+  // Sets pseudo-flags
+  m_dupe = !EXIST;
+  m_rebalance = !EXIST;
+  m_removal = !EXIST;
+  m_removed = !EXIST;
+  m_key = !EXIST;
+  
+}
+
+
+
+// CTree copy constructor
+CTree::CTree(const CTree& other) {
+
+  m_root = NULL;
+  copy(other.m_root);
+  
+}
+
+
+
+// CTree destructor
+CTree::~CTree() {
+
+  // Checks if a tree exists
+  if (m_root != NULL) {
+    deletion();
+  }
+  
+}
+
+
+
+// CTree overloaded assignment operator
+const CTree& CTree::operator=(const CTree& rhs) {
+
+  // Checks self-assignment before assignment
+  if (this != &rhs) {
+
+    // Deletes the previous tree for this implementation
+    this->deletion();
+    m_root = NULL;
+
+    // Assigns CTree
+    CNode *root = rhs.m_root;
+    copy(root);
+    
+  } 
+  
+  return *this;
+}
+
+
+
+// Helper function for copying
+void CTree::copy(CNode *node) {
+
+  // Checks if there's nodes in the CTree
+  if (node == NULL) {
+    return;
+  }
+
+  // Assigns the root and current node if the other CTree exists
+  else if (m_root == NULL) {
+
+    // Copies root into a new node
+    CNode *root = new CNode(node->m_data);
+    root->m_height = node->m_height;
+    root->m_size = node->m_size;
+    
+    // Assigns root and current node
+    m_root = root;
+    m_currNode = m_root;
+    
+  }
+
+  
+  // Checks the left node
+  if (node->m_left != NULL) {
+
+    // Copies data into a new node
+    CNode *leftNode = new CNode(node->m_left->m_data);
+    leftNode->m_height = node->m_left->m_height;
+    leftNode->m_size = node->m_left->m_size;
+
+    // Assigns left node to new CTree
+    leftNode->m_parent = m_currNode;
+    m_currNode->m_left = leftNode;
+    
+    // Traverses left
+    m_currNode = m_currNode->m_left;
+    copy(node->m_left);
+
+    // Resets current node
+    m_currNode = m_currNode->m_parent;
+    
+  }
+
+  // Checks the right node
+  if (node->m_right != NULL) {
+
+    // Copies data into a new node
+    CNode *rightNode = new CNode(node->m_right->m_data);
+    rightNode->m_height = node->m_right->m_height;
+    rightNode->m_size = node->m_right->m_size;
+
+    // Assigns right node to new CTree
+    rightNode->m_parent = m_currNode;
+    m_currNode->m_right = rightNode;
+    
+    // Traverses right
+    m_currNode = m_currNode->m_right;
+    copy(node->m_right);
+
+    // Resets current node
+    m_currNode = m_currNode->m_parent;
+    
+  }
+
+  
+  // Node/CTree has been copied
+  return;
+  
+}
+
+
+
+ode;
+return;
+
+}
+
+    // Sets the left child of the parent as null
+    else if (parentNode->m_left == m_currNode) {
+      parentNode->m_left = NULL;
+    }
+
+    // Sets the right child of the parent as null
+    else if (parentNode->m_right == m_currNode) {
+      parentNode->m_right = NULL;
+    }
+
+    // Deletion and node resetting
+delete m_currNode;
+m_currNode = parentNode;
+return;
+
+}
+
+}// Helper function for the destructor
+void CTree::deletion() {
+
+  // Traverses to an existing left node (recursively)
+  if (m_currNode->m_left != NULL) {
+
+    // Traversal preparation
+    m_currNode = m_currNode->m_left;
+    deletion();
+
+  }
+
+  // Traverses to an existing right node (recursively)
+  if (m_currNode->m_right != NULL) {
+
+    // Traversal preparation
+    m_currNode = m_currNode->m_right;
+    deletion();
+
+  }
+
+  // Checks leaf with child cases
+  if ((m_currNode->m_left == NULL) && (m_currNode->m_right == NULL)) {
+
+    CNode *parentNode = m_currNode->m_parent;
+
+    // End of deletion (no nodes in CTree)
+    if (m_currNode == NULL) {
+      return;
+    }
+    
+    // Root deletion
+    else if ((parentNode == NULL) && (m_currNode != NULL)) {
+      
+      delete m_currNode;
+      return;
+
+    }
+
+    // Sets the left child of the parent as null
+    else if (parentNode->m_left == m_currNode) {
+      parentNode->m_left = NULL;
+    }
+
+    // Sets the right child of the parent as null
+    else if (parentNode->m_right == m_currNode) {
+      parentNode->m_right = NULL;
+    }
+
+    // Deletion and node resetting
+    delete m_currNode;
+    m_currNode = parentNode;
+    return;
+    
+  }
+  
+}
+
+
+
+// Adds an item to CTree
+void CTree::insert(int key) {
+
+  // First node in the CTree
+  if (m_root == NULL) {
+    
+    // Readies the CTree's root and current node
+    m_root = new CNode(key);
+    m_currNode = m_root;
+    m_root->m_size++;
+    return;
+    
+  }
+
+  
+  // Checks if the current node's data is a duplicate (sets flag)
+  if (m_currNode->m_data == key) {
+    m_dupe = EXIST;
+  }
+
+  // Insertion cases
+  // Left node insertion
+  if (m_dupe != EXIST) {
+    if (m_currNode->m_data > key) {
+
+      // Empty case - no node on the left side
+      if (m_currNode->m_left == NULL) {
+
+	// Insertion of new node into CTree
+	CNode *newNode = new CNode(key);
+	newNode->m_size++;
+	newNode->m_parent = m_currNode;
+	m_currNode->m_left = newNode;
+
+	// Current node is set to leaf
+	m_currNode = m_currNode->m_left;
+
+      }
+
+      // Traversal case - node exists on the left side
+      else if (m_currNode->m_left != NULL) {
+
+	// Moves current node to the left node/child before recursion
+	m_currNode = m_currNode->m_left;
+	insert(key);
+      }    
+    }
+
+    // Right node insertion
+    else if (m_currNode->m_data < key) {
+
+      // Empty case - no nod eon the right side
+      if (m_currNode->m_right == NULL) {
+
+	// Insertion of new node into CTree
+	CNode *newNode = new CNode(key);
+	newNode->m_size++;
+	newNode->m_parent = m_currNode;
+	m_currNode->m_right = newNode;
+
+	// Current node is set to leaf
+	m_currNode = m_currNode->m_right;
+
+      }
+
+      // Traversal case - node exists on the right side
+      else if (m_currNode->m_right != NULL) {
+
+	// Moves current node to the right node/child before recursion
+	m_currNode = m_currNode->m_right;
+	insert(key);
+
+      }
+    }
+  }
+  
+  // Checks if a duplicate exists
+  if (m_dupe == EXIST) {
+
+    // Reset pseudo-flags and current node
+    m_dupe = !EXIST;
+    m_currNode = m_root;
+    return;
+    
+  }
+  
+  // Height cases (for insertion)
+  // Height comparisons between parent and child node after insertion
+  else if (m_dupe != EXIST) {
+
+    // Root case - current node is at the root
+    if (m_currNode->m_parent == NULL) {
+      // Continues to possible rebalancing
+    }
+    
+    // Change case - height incrementation
+    else if (m_currNode->m_parent->m_height == m_currNode->m_height) {
+
+      // Sets current node to parent and increments height and size
+      m_currNode = m_currNode->m_parent;
+      m_currNode->m_height++;
+      m_currNode->m_size++;
+
+      // Continues to possible rebalancing
+      if (m_currNode->m_parent == NULL) {
+      }
+      else {
+	return;
+      }
+      
+    }
+
+    // Leaf case - height doesn't change from existing leaves
+    else if (m_currNode->m_parent->m_height != m_currNode->m_height) {
+
+      // Sets current node to the parent before incrementing size
+      m_currNode = m_currNode->m_parent;
+      m_currNode->m_size++;
+
+      // Continues to possible rebalancing
+      if (m_currNode->m_parent == NULL) {
+      }
+      else {
+	return;
+      }
+      
+    }
+  }
+
+  
+  // Checks for rebalancing (sets flag)
+  check();
+
+  // Checks pseudo-flag for rebalancing
+  if ((m_rebalance == EXIST) && (m_currNode == m_root)) {
+
+    // Readies CNode sorting array before rebalancing
+    m_cap = m_rebalNode->m_size;
+    m_array = new CNode*[m_cap];
+    m_currNode = m_rebalNode;
+    rebalance();
+    
+  }
+  
+  // End of insertion
+  return;
+  
+}
+
+
+
+// Finds and removes an item with a given key value
+bool CTree::remove(int key) {
+
+  // Case for a nonexistent CTree
+  if (m_currNode == NULL) {
+    return m_key;
+  }
+  
+  // Checks for rebalancing (sets flag)
+  check();
+
+  
+  // Key found - sets pseudo-flags for removal
+  if (m_currNode->m_data == key) {
+    
+    m_removal = EXIST;
+    m_key = EXIST;
+    
+  }
+  
+  // Compares key value to subtree's left node
+  else if (m_currNode->m_data > key) {
+
+    // Left node traversal
+    if (m_currNode->m_left != NULL) {
+
+      m_currNode = m_currNode->m_left;
+      m_key = remove(key);
+
+      // Resets current node if there's no removal
+      if (m_removed != EXIST) {
+	m_currNode = m_currNode->m_parent;
+      }
+      
+    }
+
+    // Key value not found - sets flags
+    else if (m_currNode->m_left == NULL) {
+      
+      m_removed = !EXIST;
+      m_key = !EXIST;
+      return m_key;
+      
+    }
+  }
+
+  // Compares key value to subtree's right node
+  else if (m_currNode->m_data < key) {
+
+    // Right node traversal
+    if (m_currNode->m_right != NULL) {
+      
+      m_currNode = m_currNode->m_right;
+      m_key = remove(key);
+
+      // Resets current node if there's no removal
+      if (m_removed != EXIST) {
+	m_currNode = m_currNode->m_parent;
+      }
+      
+    }
+
+    // Key value not found - flags set
+    else if (m_currNode->m_right == NULL) {
+      
+      m_removed = !EXIST;
+      m_key = !EXIST;
+      return m_key;
+      
+    }
+  }
+
+  
+  // Size adjustment after removal
+  if ((m_removed == EXIST) && (m_removal != EXIST)) {
+    
+    // Adjusts size and resets current node
+    if (m_currNode->m_parent != NULL) {
+
+      m_currNode->m_size--;
+      m_currNode = m_currNode->m_parent;
+
+    }
+
+    // Adjusts size and resets flag at root
+    else if (m_currNode->m_parent == NULL) {
+      m_currNode->m_size--;
+      m_removed = !EXIST;
+
+      // Sets capacity for possible rebalancing
+      if (m_rebalance == EXIST) {
+	m_cap = m_rebalNode->m_size;
+      }
+      
+    }
+    
+  }
+  
+  
+  // Removal cases
+  if (m_removal == EXIST) {
+
+    // Storage for parent node
+    CNode *parentNode;
+
+    
+    // Case for no children
+    if ((m_currNode->m_left == NULL) && (m_currNode->m_right == NULL)) {
+
+      // Case for CTree having only one node (at root)
+      if (m_currNode == m_root) {
+
+	// Removes node and resets current node and flags
+	delete m_currNode;
+	m_root = NULL;
+	m_currNode = m_root;
+	m_removal = !EXIST;
+	return m_key;
+	
+      }
+      
+      // Identifies the current node as the left child of parent
+      else if (m_currNode->m_parent->m_left == m_currNode) {
+
+	// Sets parent node before setting child as null
+	parentNode = m_currNode->m_parent;
+	m_currNode->m_parent->m_left = NULL;
+	
+      }
+
+      // Identifies the current node as the right child of parent
+      else if (m_currNode->m_parent->m_right == m_currNode) {
+
+	// Sets parent node before setting child as null
+	parentNode = m_currNode->m_parent;
+	m_currNode->m_parent->m_right = NULL;
+	
+      }
+      
+      // Remove current node
+      delete m_currNode;
+      m_currNode = NULL;
+
+      // Sets removal flags and current node
+      m_removal = !EXIST;
+      m_removed = EXIST;
+      m_currNode = parentNode;
+
+    }
+
+    
+    // Case for a left child
+    else if ((m_currNode->m_left != NULL) && (m_currNode->m_right == NULL)) {
+      
+      // Identifies the current node as the left child of parent
+      if (m_currNode->m_parent->m_left == m_currNode) {
+
+	// Sets parents 
+	parentNode = m_currNode->m_parent;
+	m_currNode->m_left->m_parent = m_currNode->m_parent;
+
+	// Sets parent's child to remaining child
+	m_currNode->m_parent->m_left = m_currNode->m_left;
+	
+      }
+
+      // Identifies the current node as the right child of parent      
+      else if (m_currNode->m_parent->m_right == m_currNode) {
+
+	// Sets parents
+	parentNode = m_currNode->m_parent;
+	m_currNode->m_left->m_parent = m_currNode->m_parent;
+
+	// Sets parent's child to remaining child
+	m_currNode->m_parent->m_right = m_currNode->m_left;
+
+      }
+
+      // Delete current node
+      delete m_currNode;
+      
+      // Sets removal flags and current node
+      m_removal = !EXIST;
+      m_removed = EXIST;
+      m_currNode = parentNode;
+
+    }
+
+    
+    // Case for a right child
+    else if ((m_currNode->m_right != NULL) && (m_currNode->m_left == NULL)) {
+
+      // Identifies the current node as the left child of parent
+      if (m_currNode->m_parent->m_left == m_currNode) {
+
+	// Sets parents
+	parentNode = m_currNode->m_parent;
+	m_currNode->m_right->m_parent = m_currNode->m_parent;
+
+	// Sets parent's child to remaining child
+	m_currNode->m_parent->m_left = m_currNode->m_right;
+	
+      }
+
+      // Identifies the current node as the right child of parent      
+      else if (m_currNode->m_parent->m_right == m_currNode) {
+
+	// Sets parents
+	parentNode = m_currNode->m_parent;
+	m_currNode->m_right->m_parent = m_currNode->m_parent;
+
+	// Sets parent's child to remaining child
+	m_currNode->m_parent->m_right = m_currNode->m_right;
+	
+      }
+
+      // Delete current node
+      delete m_currNode;
+      
+      // Sets removal flags and current node
+      m_removal = !EXIST;
+      m_removed = EXIST;
+      m_currNode = parentNode;
+
+    }
+
+    
+    // Case for two children
+    else if ((m_currNode->m_left != NULL) && (m_currNode->m_right != NULL)) {
+
+      // Preparations to search for the largest data in
+      // the current node's left subtree
+      int data;
+      CNode *largestNode = m_currNode->m_left;
+      parentNode = m_currNode->m_parent;
+
+      // Traverses through a subtree's right child
+      while (largestNode->m_right != NULL) {
+
+	// Adjusts size 
+	largestNode->m_size--;
+
+	// Adjusts height
+	if (largestNode->m_left != NULL) {	  
+	  if (largestNode->m_right->m_height ==
+	      largestNode->m_left->m_height) {
+	  // No change to height
+	  }
+	  
+	  else {
+	    largestNode->m_height--;
+	  }	  
+	}
+
+	else {
+	  largestNode->m_height--;
+	}
+	
+	// Moves to right node
+	largestNode = largestNode->m_right;
+		
+      }
+
+      // Obtain data from the largest node
+      data = largestNode->m_data;
+
+      
+      // Largest node cases
+      // Largest node has a left child and traversed
+      if ((largestNode->m_left != NULL) &&
+	  (largestNode->m_parent->m_right == largestNode)) {
+
+	// Connects the left child to the largest node's parent
+	largestNode->m_left->m_parent = largestNode->m_parent;
+	largestNode->m_parent->m_right = largestNode->m_left;
+	
+      }
+
+      // Largest node has a left child without traversing
+      else if ((largestNode->m_left != NULL) &&
+	       (largestNode->m_parent->m_left == largestNode)) {
+
+	// Connects the left child to the largest node's parent
+	largestNode->m_left->m_parent = largestNode->m_parent;
+	largestNode->m_parent->m_left = largestNode->m_left;
+
+      }
+
+      // Largest node has no children 
+      else if ((largestNode->m_left == NULL) &&
+	       (largestNode->m_right == NULL)) {
+
+	// Largest node has traversed
+	if (largestNode->m_parent != m_currNode) {	  
+	  largestNode->m_parent->m_right = NULL;
+	}
+
+	// Largest node did not traverse
+	else if (largestNode->m_parent == m_currNode) {
+	  m_currNode->m_left = NULL;
+	}
+	
+      }
+
+      
+      // "Deletes" the key at the current node while changing
+      // size
+      m_currNode->m_data = data;
+      m_currNode->m_size--;
+      
+      // Remove the largest node;
+      delete largestNode;
+      
+      // Sets removal flags
+      m_removal = !EXIST;
+      m_removed = EXIST;
+
+      // Case for parent assignment
+      if (parentNode != NULL) {
+	m_currNode = parentNode;	
+      } 
+    }
+    
+  } 
+
+
+  // Height cases (for removal)
+  // Case for the current node being the root
+  if (m_removed == EXIST) {
+    
+    if (m_currNode == NULL) {
+      return m_key;
+    }
+    
+    // Right node only exists
+    else if ((m_currNode->m_right != NULL) && (m_currNode->m_left == NULL)) {
+      m_currNode->m_height = m_currNode->m_right->m_height + INDEX;
+    }
+
+    // Left node only exists
+    else if ((m_currNode->m_left != NULL) && (m_currNode->m_right == NULL)) {
+      m_currNode->m_height = m_currNode->m_left->m_height + INDEX;
+    }
+
+    // Both nodes exist; retrieves height of whichever is greater
+    else if ((m_currNode->m_left != NULL) && (m_currNode->m_right != NULL)) {
+
+      // Left node's height is greater
+      if (m_currNode->m_left->m_height > m_currNode->m_right->m_height) {
+	m_currNode->m_height = m_currNode->m_left->m_height + INDEX;
+      }
+
+      // Right node's height is greater
+      else if (m_currNode->m_left->m_height < m_currNode->m_right->m_height) {
+	m_currNode->m_height = m_currNode->m_right->m_height + INDEX;
+      }
+
+      // Uses left node's height (as both heights are equal)
+      else {
+	m_currNode->m_height = m_currNode->m_left->m_height + INDEX;
+      }
+    }
+    
+    // Both nodes don't exist - leaf found
+    else {
+      m_currNode->m_height--;
+    }
+    
+  }
+
+  
+  // Rewinds recursion to the root
+  if (m_removed == EXIST) {
+    return m_key;
+  }
+  
+  // Checks pseudo-flag for rebalancing 
+  if ((m_rebalance == EXIST) && (m_currNode == m_root)) {
+
+    // Readies CNode sorting array before rebalancing
+    m_array = new CNode*[m_cap];
+    m_currNode = m_rebalNode;
+    rebalance();
+
+  }
+
+  // End of removal
+  return m_key;
+
+}
+
+
+
+// Reports whether the given key is stored in the tree
+bool CTree::find(int key) {
+
+  // Case for an empty CTree
+  if (m_currNode == NULL) {
+    m_key = !EXIST;
+  }
+
+  // Key found
+  if (m_currNode->m_data == key) {
+    m_key = EXIST;
+  }
+
+  // Traversals for a key
+  // Left node traversal
+  else if (m_currNode->m_data > key) {
+
+    // Assigns existing left child
+    if (m_currNode->m_left != NULL) {
+      
+      m_currNode = m_currNode->m_left;
+      m_key = find(key);
+
+      // Resets current node
+      m_currNode = m_currNode->m_parent;
+
+    }
+
+    // Key not found
+    else if (m_currNode->m_left == NULL) {
+      m_key = !EXIST;
+    }
+
+  }
+
+  // Right node traversal
+  else if (m_currNode->m_data < key) {
+
+    // Assigns existing right child
+    if (m_currNode->m_right != NULL) {
+
+      m_currNode = m_currNode->m_right;
+      m_key = find(key);
+
+      // Resets current node
+      m_currNode = m_currNode->m_parent;
+
+    }
+
+    // Key not found
+    else if (m_currNode->m_right == NULL) {
+      m_key = !EXIST;
+    }
+
+  }
+
+  return m_key;
+
+}
+
+
+
+// Checks for rebalancing
+void CTree::check() {
+
+  // Rebalance cases
+  if (m_rebalance != EXIST) {
+    
+    // Left and right subtrees exist
+    if ((m_currNode->m_left != NULL) && (m_currNode->m_right != NULL)) {
+
+      // Sets the size difference of existing subtrees
+      int sizeDifference = m_currNode->m_left->m_size;
+      sizeDifference = sizeDifference - m_currNode->m_right->m_size;
+
+      // Identifies if the size-balance property is violated
+      if ((sizeDifference > LIMIT) || (sizeDifference < ABS_LIMIT)) {
+
+	// Sets rebalance pseudo-flag and rebalancing node
+	m_rebalance = EXIST;
+	m_rebalNode = m_currNode;
+
+      }
+    }
+
+    // Left subtree exists: check its size
+    else if ((m_currNode->m_left != NULL) && (m_currNode->m_right == NULL)) {
+      if (m_currNode->m_left->m_size > LIMIT) {
+
+	// Sets rebalance pseudo-flag and rebalancing node
+	m_rebalance = EXIST;
+	m_rebalNode = m_currNode;
+
+      }
+    }
+
+    // Right subtree exists: check its size
+    else if ((m_currNode->m_left == NULL) && (m_currNode->m_right != NULL)) {
+      if (m_currNode->m_right->m_size > LIMIT) {
+
+	// Sets rebalance pseudo-flag and rebalancing node
+	m_rebalance = EXIST;
+	m_rebalNode = m_currNode;
+
+      }
+    }    
+  }
+  
+}
+
+
+
+// Rebalances a subtree of CTree
+void CTree::rebalance() {
+
+  // Retrieves array
+  sorting();
+
+  CNode *parentNode;
+  
+  // Case for the rebalanced node to be the root
+  if (m_rebalNode == m_root) {
+
+    // Stores the root's parent before balancing
+    parentNode = m_rebalNode->m_parent;    
+    m_rebalNode = subtree(INITIAL, m_cap);
+    m_rebalNode->m_parent = parentNode;
+
+    // Sets current node and root 
+    m_currNode = m_rebalNode;
+    m_root = m_rebalNode;
+
+  }
+
+  // Rebalances subtree while storing parent
+  else {
+
+    parentNode = m_rebalNode->m_parent;
+    m_rebalNode = subtree(INITIAL, m_cap);
+    m_rebalNode->m_parent = parentNode;
+
+    // Resets current node to root
+    m_currNode = m_root;    
+  }
+
+
+  // Deletes and deallocates sorting array
+  for (int i = INITIAL; i < m_cap; i++) {
+    m_array[i] = NULL;
+  }
+
+  delete [] m_array;
+  
+  // Resets pseudo-flags, count, and capacity
+  m_rebalance = !EXIST;
+  m_count = INITIAL;
+  m_cap = INITIAL;
+  
+}
+
+
+
+// Sorts a subtree's nodes
+void CTree::sorting() {
+
+  // Traversal through a subtree
+  if ((m_currNode->m_left != NULL) && (m_currNode->m_right != NULL)) {
+
+    // Traversal to the left node before resetting
+    m_currNode = m_currNode->m_left;
+    sorting();
+    m_currNode = m_currNode->m_parent;
+
+    // Places current node into a sorted array    
+    retrieve();
+
+    // Traversal to the right node before resetting
+    m_currNode = m_currNode->m_right;
+    sorting();
+    m_currNode = m_currNode->m_parent;
+
+  }
+  
+  // Traverses to an existing left node 
+  else if ((m_currNode->m_left != NULL) && (m_currNode->m_right == NULL)) {
+
+    // Traversal preparation before resetting
+    m_currNode = m_currNode->m_left;
+    sorting();
+    m_currNode = m_currNode->m_parent;
+
+    // Places current node into a sorted array    
+    retrieve();
+
+  }
+
+  // Traverses to an existing right node
+  else if ((m_currNode->m_right != NULL) && (m_currNode->m_left == NULL)) {
+
+    // Places current node into a sorted array
+    retrieve();
+
+    // Traversal preparation before resetting
+    m_currNode = m_currNode->m_right;
+    sorting();
+    m_currNode = m_currNode->m_parent;
+
+  }
+
+  // Retrieves the leaf's node
+  else if ((m_currNode->m_left == NULL) && (m_currNode->m_right == NULL)) {
+
+    // Places leaf into array
+    retrieve();
+    return;
+    
+  }
+}
+
+
+
+// Retrieves the current node for a sorted array
+void CTree::retrieve() {
+
+  // Resets height and size of current node for rebalancing
+  m_currNode->m_height = INITIAL;
+  m_currNode->m_size = INITIAL;
+  m_array[m_count] = m_currNode;
+  m_count++;
+
+}
+
+
+
+// Constructs a subtree from a sorted array
+CNode *CTree::subtree(int start, int end) {
+
+  // Base case for a leaf
+  if ((start > end) || (start == m_cap)) {
+    return NULL;
+  }
+
+  // Forms the rebalanced subtree's root
+  int mid = (start + end) / HALF;
+  CNode *subRoot = m_array[mid];
+
+  
+  // Recursively makes the left subtree as a left child
+  subRoot->m_left = subtree(start, mid - INDEX);
+
+  // Sets parent and increments both the subroot and the left child
+  if (subRoot->m_left != NULL) {
+    
+    subRoot->m_left->m_parent = subRoot;
+    subRoot->m_left->m_size++;
+    subRoot->m_size++;
+
+  }
+
+  
+  // Recursively makes the right subtree as a right child
+  subRoot->m_right = subtree(mid + INDEX, end);
+  
+  // Sets parent and increments both the subroot and the left child
+  if (subRoot->m_right != NULL) {
+    
+    subRoot->m_right->m_parent = subRoot;
+    subRoot->m_right->m_size++;
+    subRoot->m_size++;
+
+  }
+
+  
+  // Height cases (for a subtree)
+  // Right node only exists
+  if ((subRoot->m_right != NULL) && (subRoot->m_left == NULL)) {
+    subRoot->m_height = subRoot->m_right->m_height + INDEX;
+  }
+
+  // Left node only exists
+  else if ((subRoot->m_left != NULL) && (subRoot->m_right == NULL)) {
+    subRoot->m_height = subRoot->m_left->m_height + INDEX;
+  }
+
+  // Both nodes exist; retrieves height of whichever is greater
+  else if ((subRoot->m_left != NULL) && (subRoot->m_right != NULL)) {
+
+    // Left node's height is greater
+    if (subRoot->m_left->m_height > subRoot->m_right->m_height) {
+      subRoot->m_height = subRoot->m_left->m_height + INDEX;
+    }
+
+    // Right node's height is greater
+    else if (subRoot->m_left->m_height < subRoot->m_right->m_height) {
+      subRoot->m_height = subRoot->m_right->m_height + INDEX;
+    }
+
+    // Uses left node's height (as it both heights are equal)
+    else {
+      subRoot->m_height = subRoot->m_left->m_height + INDEX;
+    }
+
+    // Size adjustment for parent
+    subRoot->m_size = subRoot->m_left->m_size + subRoot->m_right->m_size;
+  }
+
+  // Size case for the first subtree root
+  if ((start == INITIAL) && (end == m_cap)) {
+    subRoot->m_size++;
+  }
+  
+  return subRoot;
+}
+
+
+
+// Performs an inorder traversal of the CTree and
+// outputs in respective order: "key:height:size"
+// with parentheses for subtrees
+void CTree::inorder() {
+
+  // Checks if there's nodes in a CTree
+  if (m_currNode == NULL) {
+    return;
+  }
+
+  
+  // Checks the left node
+  if (m_currNode->m_left == NULL) {
+    std::cout << "(";
+  }
+
+  // Traverses to an existing left node (recursively)
+  else if (m_currNode->m_left != NULL) {
+
+    // Traversal preparation
+    m_currNode = m_currNode->m_left;
+    std::cout << "(";
+    inorder();
+
+    // Resets node to its parent
+    m_currNode = m_currNode->m_parent;
+
+  }
+
+  
+  // Checks the right node
+  if (m_currNode->m_right == NULL) {
+
+    // Outputs data
+    std::cout << m_currNode->m_data << ":"
+	      << m_currNode->m_height << ":"
+	      << m_currNode->m_size << ")";
+
+    // Traverses to previous function call
+    return;
+    
+  }
+
+  // Traverses to an existing right node (recursively)
+  else if (m_currNode->m_right != NULL) {
+
+    // Outputs data
+    std::cout << m_currNode->m_data << ":"
+	      << m_currNode->m_height << ":"
+	      << m_currNode->m_size;
+    
+    // Traversal preparation
+    m_currNode = m_currNode->m_right;
+    inorder();
+
+    // Resets node to its parent
+    m_currNode = m_currNode->m_parent;
+
+    // Outputs last parentheses before returning
+    std::cout << ")";
+    return;
+
+  }
+  
+}
+
+
+
+// Returns whether there is a node in a position
+// of the CTree and stores the key
+bool CTree::locate(const char *position, int& key) {
+
+  // Traversal cases
+  // Left node traversal
+  if (position[m_count] == LEFT) {
+
+    // Goes to the next existing position
+    if (m_currNode->m_left != NULL) {
+      
+      m_currNode = m_currNode->m_left;
+      m_count++;
+      m_key = locate(position, key);
+
+    }
+
+    // Node does not exist
+    else if (m_currNode->m_left == NULL) {
+
+      // Resets count and current node
+      m_currNode = m_root;
+      m_count = INITIAL;
+      m_key = !EXIST;
+      
+    }
+    
+  }
+
+  // Right node traversal
+  else if (position[m_count] == RIGHT) {
+
+    // Goes to the next existing position
+    if (m_currNode->m_right != NULL) {
+      
+      m_currNode = m_currNode->m_right;
+      m_count++;
+      m_key = locate(position, key);
+
+    }
+
+    // Node does not exist
+    else if (m_currNode->m_right == NULL) {
+
+      // Resets count and current node
+      m_currNode = m_root;
+      m_count = INITIAL;
+      m_key = !EXIST;
+      
+    }
+    
+  }
+  
+  // End of the constant C string/position
+  else if (position[m_count] == END) {
+
+    // Node found
+    if (m_currNode != NULL) {
+
+      // Sets flag, key value, count, and resets current node
+      m_key = EXIST;
+      key = m_currNode->m_data;
+      m_count = INITIAL;
+      m_currNode = m_root;
+
+    }
+
+    // Node doesn't exist
+    else if (m_currNode == NULL) {
+
+      // Sets flag and count and resets current node
+      m_key = !EXIST;
+      m_count = INITIAL;
+      m_currNode = m_root;
+
+    }
+    
+  }
+      
+  return m_key;
+  
+}

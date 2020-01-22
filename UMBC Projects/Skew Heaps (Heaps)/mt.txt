@@ -1,0 +1,24 @@
+CXX = g++
+CXXFlags = -Wall
+
+proj4t: SkewHeap.o TypedHeap.o test1.cpp
+	$(CXX) $(CXXFLAGS) SkewHeap.o TypedHeap.o test1.cpp -o proj4t
+
+TypedHeap.o: TypedHeap.h TypedHeap.cpp
+	$(CXX) $(CXXFLAGS) -c TypedHeap.cpp
+
+SkewHeap.o: SkewHeap.h SkewHeap.cpp
+	$(CXX) $(CXXFLAGS) -c SkewHeap.cpp
+
+run:
+	./proj4t
+
+val:
+	valgrind pro4jt
+
+clean:
+	rm *~
+
+cleaner:
+	rm *~
+	rm *.o
